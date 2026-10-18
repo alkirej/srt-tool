@@ -1,3 +1,9 @@
+import logging as log
+
+HOUR: float = 3600.0  # 3,600 seconds in an hour
+MINUTE: float = 60.0  # 60 seconds in a minute
+SECOND: float = 1.0   # 1 second in a second
+MILLI: int = 1000     # 1,000 millis in a second
 
 # *****************************************************
 # Hour:Minute:Second,millis format 
@@ -6,7 +12,7 @@
 #     is a total of 64.5 seconds.
 # *****************************************************
 
-def to_secs(in_str: str) -> float:
+def hmsm_dur_to_secs(in_str: str) -> float:
     # time_stamp and milliseconds return as str
     parts: [str] = in_str.split(",")
     time_stamp: str = parts[0]
@@ -17,22 +23,89 @@ def to_secs(in_str: str) -> float:
     else:
         milliseconds: str = parts[1]
 
-    millis: float = int(milliseconds) / 1000
-    split_time:[str] = time_stamp.split(":")
+    millis: float = int(milliseconds) / 1000.0
+    if millis >= 1.0:
+        log.error(f"{milliseconds} is too many millis. Setting to max (999)")
+        millis=0.999
 
+    split_time:[str] = time_stamp.split(":")
     if len(split_time)>3:
-        raise ValueError(f"{in_str} is an invalid timestamp. (hh:mm:ss,mmm)")
+        log.error(f"{in_str} is an invalid timestamp. (hh:mm:ss,mmm)")
+        return 0
 
     total_secs = 0.0
     for idx, num in enumerate(split_time):
         if '' == num:
             num_val=0
         else:
-            num_val=int(num)
+            try:
+                num_val=int(num)
+            except:
+                log.error(f"{num} from {in_str} is an invalid. (hh:mm:ss,mmm)")
+                num_val = 0
 
         place=(len(split_time)-idx-1)
         place_val=60**place
         total_secs = total_secs + num_val*place_val
 
     return total_secs + millis
+
+# *****************************************************
+# Receive an input and convert into a count of the seconds
+# in the input. The routine should hand any kinds of input
+# and give 0.0 in the event the type cannot convert to time.
+#
+# for strings assume HH:MM:SS,mmmm format
+# for int and float return the number as the result
+# other types get to be 0.
+# *****************************************************
+def convert_to_secs(num_seconds) -> float:
+    if type(num_seconds) == str:
+        return hmsm_dur_to_secs(num_seconds)
+    if type(num_seconds) == int:
+        return float(num_seconds)
+    if type(num_seconds) == float:
+        return num_seconds
+
+    return 0.0
+
+# *****************************************************
+# Given a number of seconds, return the duration in the
+# HH:MM:SS,mmmm format.
+# *****************************************************
+def secs_to_hmsm_dur(secs: float) -> str:
+    i_secs: int = int(secs)
+    print(f"input: {secs}")
+    millis: float = secs - i_secs  # fractions of a second
+    print(f"millis: {millis}")
+    millis = millis * MILLI             # convert to milli secs
+    print(f"millis: {millis}")
+    i_millis: int = int(millis)         # remove and excess fraction
+    print(f"i_millis: {i_millis}")
+    (hrs, secs_left) = divmod(i_secs,HOUR)
+    print(f"hrs: {hrs}   secs_left: {secs_left}")
+    (mins, secs_left) = divmod(secs_left,MINUTE)
+
+    return num_as_two_digits(hrs) + ":" +  \
+           num_as_two_digits(mins) + ":" +  \
+           num_as_two_digits(secs_left) + "," +  \
+           str(i_millis)
+
+# *****************************************************
+# Make numbers into text strings of exactly 2 chars
+# to work properly in HH:MM:SS,mmmm format.
+# *****************************************************
+def num_as_two_digits(num: int | float) -> str:
+    i_num = int(num)
+    if i_num > 99 or i_num < 0:
+        raise Error(f"{num} cannot be converted to a 2 digit number")
+
+    if i_num < 10:
+        return "0" + str(i_num)
+    return str(i_num)
+
+
+import sys
+print(sys.argv[1])
+print( secs_to_hmsm_dur( float(sys.argv[1]) ))
 
