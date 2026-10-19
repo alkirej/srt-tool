@@ -3,7 +3,7 @@
 # **********************************
 import sys
 from pathlib import Path
-new_path: Path = str(Path(__file__).resolve().parent.parent)
+new_path: str = str(Path(__file__).resolve().parent.parent)
 if new_path not in sys.path:
     sys.path.append(new_path)
 # **********************************
@@ -17,6 +17,7 @@ if new_path not in sys.path:
 # **********************************
 import time_fns as tfn
 
+
 class SubtitleBlock:
 
     # **********************************
@@ -29,8 +30,7 @@ class SubtitleBlock:
                  index: int, 
                  times: tfn.TimeBlock, 
                  text: str
-                ):
+                 ):
         self.idx: int = index
-        self.tb: TimeBlock = times
+        self.tb: tfn.TimeBlock = times
         self.to_display: str = text
-
