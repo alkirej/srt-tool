@@ -12,7 +12,7 @@ import time_fns as timefn
 # DETERMINE THE START AND STOP LOCATIONS SUPPLIED ON THE 
 # COMMAND LINE
 def determine_gap( args: ap.Namespace ) -> timefn.TimeBlock:
-    return timefn.TimeBlock(args.start_time, args.stop_time)
+    return timefn.TimeBlock(args.start_at, args.stop_at)
 
 # READ AND ECHO THE SRT INFORMATION
 def read( args: ap.Namespace ) -> srtfn.SrtFile:
@@ -28,7 +28,6 @@ def show( args: ap.Namespace) -> srtfn.SrtFile:
     subs: srtfn.SrtFile = srtfn.SrtFile(args.from_file)
 
     gap: timefn.TimeBlock = determine_gap(args)
-    print(gap.stop)
     if gap.stop == 0.0:
         gap.stop = subs.end_of_last_subtitle()
 
@@ -65,7 +64,9 @@ def remove_gap( args: ap.Namespace ) -> srtfn.SrtFile:
     except e:
         del_gap: timefn.TimeBlock|None = None
 
-    print(srtfn.srt_time_output(del_gap))
+    matches = start_file.get_subtitles_from(del_gap, True)
+    for bl in matches:
+        print( srtfn.srt_time_output(bl.tb) )
 
 def remove_gap_list( args: ap.Namespace ) -> srtfn.SrtFile:
     if not libfn.has_meaningful_value(args.edl_times):
@@ -153,10 +154,10 @@ def main():
     parser.add_argument("--from-file", 
                         type=file_name_check
                         )
-    parser.add_argument("--start-time", 
+    parser.add_argument("--start-at", 
                         type=timestamp_check
                         )
-    parser.add_argument("--stop-time", 
+    parser.add_argument("--stop-at", 
                         type=timestamp_check
                         )
     parser.add_argument("--clean-escape-seq",

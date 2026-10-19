@@ -24,6 +24,16 @@ class TimeBlock:
 
         return start_time_inside and stop_time_inside
 
+    def overlap_end(self, duration) -> bool:
+        start_time_inside: bool = self.contains_time_point(duration.start)
+        stop_time_inside: bool = self.contains_time_point(duration.stop)
+        return start_time_inside and not stop_time_inside
+
+    def overlap_start(self, duration) -> bool:
+        start_time_inside: bool = self.contains_time_point(duration.start)
+        stop_time_inside: bool = self.contains_time_point(duration.stop)
+        return stop_time_inside and not start_time_inside
+
     def contains_overlap(self, duration) -> bool:
         start_time_inside: bool = self.contains_time_point(duration.start)
         stop_time_inside: bool = self.contains_time_point(duration.stop)

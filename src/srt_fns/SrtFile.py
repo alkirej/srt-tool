@@ -103,3 +103,23 @@ class SrtFile:
     def to_string(self) -> str:
         return "".join( sfn.srt_block_output(b) for b in self.st_blocks)
 
+    def get_subtitles_from(self, 
+                           tb: tfn.TimeBlock, 
+                           include_overlaps: bool = False
+                           ) -> [tfn.TimeBlock]:
+        if include_overlaps:
+            sub_include_fn: function = tb.contains_overlap
+            print(f"overlap: yes -> {sub_include_fn}")
+        else:
+            sub_include_fn: function = tb.contains_duration
+            print(f"overlap: no -> {sub_include_fn}")
+
+        included_subtitles: [tfn.TimeBlock] = []
+
+        for bl in self.st_blocks:
+            if sub_include_fn(bl.tb):
+                included_subtitles.append(bl)
+
+        return included_subtitles
+
+
