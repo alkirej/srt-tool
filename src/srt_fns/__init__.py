@@ -29,16 +29,15 @@ def srt_time_output(tb: tfn.TimeBlock) -> str:
 
     if tb.stop < tb.start:
         log.error(f"Invalid sbt time block ({start_at}-{stop_at})")
-        raise Exception(f"Invalid sbt time block ({start_at}-{stop_at})")
+        raise Exception(f"Invalid srt time block ({start_at}-{stop_at})")
 
     return start_at + SRT_SEPARATOR + stop_at
 
 def srt_block_output(sb: SubtitleBlock) -> str:
     srt_lines: [str] = [ str(sb.idx),
                          srt_time_output(sb.tb),
-                         sb.to_display,
-                         BLANK_LINE
+                         sb.to_display
                         ]
-    return "\n".join(srt_lines)
+    return "".join(["\n".join(srt_lines), BLANK_LINE])
 
 

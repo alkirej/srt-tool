@@ -9,43 +9,82 @@ import lib_fns as libfn
 import srt_fns as srtfn
 import time_fns as timefn
 
-# READ AND ECHO THE SBT INFORMATION
-def read( args: ap.Namespace ) -> None:
+# DETERMINE THE START AND STOP LOCATIONS SUPPLIED ON THE 
+# COMMAND LINE
+def determine_gap( args: ap.Namespace ) -> timefn.TimeBlock:
+    return timefn.TimeBlock(args.start_time, args.stop_time)
+
+# READ AND ECHO THE SRT INFORMATION
+def read( args: ap.Namespace ) -> srtfn.SrtFile:
     if not libfn.has_meaningful_value(args.from_file):
         log.error(f"Cannot find file to read things from.")
         print(f"Cannot find file to read things from.")
-        sys.exit(4)
+        sys.exit(5)
 
-    subtitle_info: srtfn.SrtFile = srtfn.SrtFile(args.from_file)
-    for b in subtitle_info.st_blocks:
-        print( srtfn.srt_time_output(b.tb) )
+    return srtfn.SrtFile(args.from_file)
+
+# PRINT THE SRT FILE OUT TO STDOUT
+def show( args: ap.Namespace) -> srtfn.SrtFile:
+    subs: srtfn.SrtFile = srtfn.SrtFile(args.from_file)
+
+    gap: timefn.TimeBlock = determine_gap(args)
+    print(gap.stop)
+    if gap.stop == 0.0:
+        gap.stop = subs.end_of_last_subtitle()
+
+    print( srtfn.srt_time_output(gap) )
 
 # DISPLAY THE SUBTITLE FROM A SPECIFIC TIME
-def display_subtitle_at( args: ap.Namespace ) -> None:
+def display_subtitle_at( args: ap.Namespace ) -> srtfn.SrtFile:
     if not libfn.has_meaningful_value(args.from_file):
         log.error(f"Cannot find file to read things from.")
         print(f"Cannot find file to read things from.")
-        sys.exit(4)
+        sys.exit(6)
 
     subtitle_info: srtfn.SrtFile = srtfn.SrtFile(args.from_file)
     print( subtitle_info.is_subtitle_here(args.at) )
     if subtitle_info.is_subtitle_here(args.at): 
-        blck: srt_fns.SubtitleBlock = subtitle_info.find_block_at( args.at )
+        blck: srtfn.SubtitleBlock = subtitle_info.find_block_at( args.at )
         print( blck.to_display )
 
-# REMOVE TIME FROM SBT FILE SUPPLIED AND OUTPUTING UPDATED INFO
-def remove( args: ap.Namespace ) -> None:
+    return subtitle_info
+
+# REMOVE ALL SUBTITLES IN THE GIVEN BLOCK. AT THE SAME TIME,
+# TRIM ANY SUBTITLES THAT OVERLAP INTO THE BLOCK TO BE 1 MILLI-
+# SECOND OUT OF THE RANGE.  FINALLY SUBTRACT THE DURATION OF
+# THE GAP FROM ALL ENTRIES AFTER THE GAP.
+def remove_gap( args: ap.Namespace ) -> srtfn.SrtFile:
     if not libfn.has_meaningful_value(args.from_file):
         log.error(f"Cannot find file to remove things from.")
         print(f"Cannot find file to remove things from.")
         sys.exit(3)
 
+    start_file: srtfn.SrtFile = read(args)
+    try:
+        del_gap: timefn.TimeBlock|None = determine_gap(args)
+    except e:
+        del_gap: timefn.TimeBlock|None = None
+
+    print(srtfn.srt_time_output(del_gap))
+
+def remove_gap_list( args: ap.Namespace ) -> srtfn.SrtFile:
     if not libfn.has_meaningful_value(args.edl_times):
         log.error(f"Cannot find file of blocks of time to remove.")
         print(f"Cannot find file of blocks of time to remove.")
         sys.exit(4)
 
     print("TIME TO IMPLEMENT REMOVAL OF EDL DATA FROM SRT FILE")
+
+# SAVE RESULTS TO AN SRT FILE
+def save_as_srt( args: ap.Namespace ) -> srtfn.SrtFile:
+    if not libfn.has_meaningful_value(args.save_as):
+        log.error(f"No file name specified for saving. (use --save-as)")
+        print(f"No file name specified for saving. (use --save-as)")
+        sys.exit(8)
+
+    subs_file: srtfn.SrtFile = read(args)
+    subs_file.write_to_file(args.save_as)
+    return subs_file
 
 
 # *******************************************************
@@ -58,24 +97,35 @@ def remove( args: ap.Namespace ) -> None:
 # *******************************************************
 # *******************************************************
 # *******************************************************
-SBT_COMMANDS = {"remove-time": remove,
+SRT_COMMANDS = {"remove-gap": remove_gap,
                 "read": read,
-                "show-subtitle": display_subtitle_at
+                "save": save_as_srt,
+                "show": show,
+                "show-subtitle": display_subtitle_at,
                }
 # *******************************************************
 # *******************************************************
 # *******************************************************
 
-def sbt_command_check(command: str) -> typing.Callable[ap.Namespace, None]:
+def srt_command_check(command: str) -> typing.Callable[ap.Namespace, None]:
     try:
-        return SBT_COMMANDS[command]
+        return SRT_COMMANDS[command]
 
     except KeyError as ke:
         log.exception(ke)
         log.error(f"{command} is not a valid command.")
         print(f"\n{command} is not a valid command. Try one of these:")
-        print(f"     {libfn.str_from_dict_keys(SBT_COMMANDS)}")
+        print(f"     {libfn.str_from_dict_keys(SRT_COMMANDS)}")
         sys.exit(1)
+
+def new_file_name_check(file_name: str) -> str:
+    if not os.path.exists(file_name):
+        return file_name
+    else:
+        log.error(f"{file_name} already exists.")
+        print(f"{file_name} already exists.")
+        sys.exit(7)
+
 
 def file_name_check(file_name: str) -> str:
     if os.path.isfile(file_name):
@@ -97,7 +147,7 @@ def main():
                              )
 
     parser.add_argument("command",
-                        type=sbt_command_check,
+                        type=srt_command_check,
                         help="What to do. (Valid options: remove)"
                         )
     parser.add_argument("--from-file", 
@@ -118,6 +168,9 @@ def main():
                         )
     parser.add_argument("--at",
                         type=timestamp_check
+                        )
+    parser.add_argument("--save-as",
+                        type=new_file_name_check
                         )
     try:
         args = parser.parse_args()

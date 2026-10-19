@@ -43,7 +43,7 @@ class SrtFile:
     def _load_from_file(self) -> [sfn.SubtitleBlock]:
         return_block_list: [sfn.SubtitleBlock] = []
 
-        with open(self.file_name) as srt_file:
+        with open(self.file_name, "r") as srt_file:
             lines: [str] = srt_file.readlines()
 
         line_count: int = len(lines) 
@@ -81,4 +81,25 @@ class SrtFile:
         looking: sfn.SubtitleBlock|None = self.find_block_at(time)
 
         return looking != None
+
+    def write_to_file(self, file_name: str) -> None:
+        if os.path.exists(file_name):
+            log.error(f"{file_name} already exists. Quiting")
+            raise Exception(f"{file_name} already exists. Quiting")
+
+        with open(file_name, "w") as srt_file:
+            for block in self.st_blocks:
+                srt_file.write( sfn.srt_block_output(block) )
+
+        log.info(f"Saved subtitle file {file_name} with {len(self.st_blocks)} entries.")
+
+    def end_of_last_subtitle(self) -> float:
+        last_time: float = 0.0
+        for b in self.st_blocks:
+            if b.tb.stop > last_time:
+                last_time = b.tb.stop
+        return last_time
+
+    def to_string(self) -> str:
+        return "".join( sfn.srt_block_output(b) for b in self.st_blocks)
 
