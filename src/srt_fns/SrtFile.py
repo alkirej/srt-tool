@@ -18,8 +18,8 @@ import sys
 # **********************************
 # CURRENT PROJECT LIBRARY IMPORTS
 # **********************************
-import time_fns as tfn
 import srt_fns as sfn
+import time_fns as tfn
 
 SRT_SEPARATOR: str = " --> "
 
@@ -67,4 +67,18 @@ class SrtFile:
             ln_nbr += 1
 
         return return_block_list
+
+    def find_block_at(self, time: str|float) -> sfn.SubtitleBlock|None:
+        secs: float = tfn.convert_to_secs(time)
+
+        for block in self.st_blocks:
+            if secs >= block.tb.start and secs <= block.tb.stop:
+                return block
+
+        return None
+
+    def is_subtitle_here(self, time: str|float) -> bool:
+        looking: sfn.SubtitleBlock|None = self.find_block_at(time)
+
+        return looking != None
 

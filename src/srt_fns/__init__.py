@@ -18,6 +18,7 @@ import logging as log
 # **********************************
 import time_fns as tfn
 from .SubtitleBlock import SubtitleBlock
+from .SrtFile import SrtFile
 
 SRT_SEPARATOR: str = " --> "
 BLANK_LINE: str = "\n"

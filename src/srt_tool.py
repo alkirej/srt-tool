@@ -12,13 +12,26 @@ import time_fns as timefn
 # READ AND ECHO THE SBT INFORMATION
 def read( args: ap.Namespace ) -> None:
     if not libfn.has_meaningful_value(args.from_file):
-        log.error(f"Cannot find file to remove things from.")
-        print(f"Cannot find file to remove things from.")
+        log.error(f"Cannot find file to read things from.")
+        print(f"Cannot find file to read things from.")
         sys.exit(4)
 
-    subtitle_info: srt_fns.SrtFile = srt_fns.SrtFile(args.from_file)
-    for b in subtitle_info.block_list:
-        timefn.srt_time_output(b)
+    subtitle_info: srtfn.SrtFile = srtfn.SrtFile(args.from_file)
+    for b in subtitle_info.st_blocks:
+        print( srtfn.srt_time_output(b.tb) )
+
+# DISPLAY THE SUBTITLE FROM A SPECIFIC TIME
+def display_subtitle_at( args: ap.Namespace ) -> None:
+    if not libfn.has_meaningful_value(args.from_file):
+        log.error(f"Cannot find file to read things from.")
+        print(f"Cannot find file to read things from.")
+        sys.exit(4)
+
+    subtitle_info: srtfn.SrtFile = srtfn.SrtFile(args.from_file)
+    print( subtitle_info.is_subtitle_here(args.at) )
+    if subtitle_info.is_subtitle_here(args.at): 
+        blck: srt_fns.SubtitleBlock = subtitle_info.find_block_at( args.at )
+        print( blck.to_display )
 
 # REMOVE TIME FROM SBT FILE SUPPLIED AND OUTPUTING UPDATED INFO
 def remove( args: ap.Namespace ) -> None:
@@ -38,8 +51,16 @@ def remove( args: ap.Namespace ) -> None:
 # *******************************************************
 # *******************************************************
 # *******************************************************
+# Each dictionary item has a key supplied as the command
+#     from the command line and a value that is a function
+#     that takes exactly 1 parameter that is a argparse
+#     Namespace object.
+# *******************************************************
+# *******************************************************
+# *******************************************************
 SBT_COMMANDS = {"remove-time": remove,
-                "remove": remove
+                "read": read,
+                "show-subtitle": display_subtitle_at
                }
 # *******************************************************
 # *******************************************************
@@ -65,8 +86,8 @@ def file_name_check(file_name: str) -> str:
         sys.exit(2)
 
 
-def timestamp_check(time_str: str) -> int:
-    return hmsm_dur_to_secs(time_str)
+def timestamp_check(time_str: str) -> float:
+    return timefn.hmsm_dur_to_secs(time_str)
 
 
 def main():
@@ -94,6 +115,9 @@ def main():
                         )
     parser.add_argument("--edl-times",
                         type=file_name_check
+                        )
+    parser.add_argument("--at",
+                        type=timestamp_check
                         )
     try:
         args = parser.parse_args()
