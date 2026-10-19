@@ -1,5 +1,7 @@
 import logging as log
 
+from .TimeBlock import TimeBlock
+
 HOUR: float = 3600.0  # 3,600 seconds in an hour
 MINUTE: float = 60.0  # 60 seconds in a minute
 SECOND: float = 1.0   # 1 second in a second
@@ -75,15 +77,10 @@ def convert_to_secs(num_seconds) -> float:
 # *****************************************************
 def secs_to_hmsm_dur(secs: float) -> str:
     i_secs: int = int(secs)
-    print(f"input: {secs}")
     millis: float = secs - i_secs  # fractions of a second
-    print(f"millis: {millis}")
     millis = millis * MILLI             # convert to milli secs
-    print(f"millis: {millis}")
     i_millis: int = int(millis)         # remove and excess fraction
-    print(f"i_millis: {i_millis}")
     (hrs, secs_left) = divmod(i_secs,HOUR)
-    print(f"hrs: {hrs}   secs_left: {secs_left}")
     (mins, secs_left) = divmod(secs_left,MINUTE)
 
     return num_as_two_digits(hrs) + ":" +  \
@@ -103,9 +100,4 @@ def num_as_two_digits(num: int | float) -> str:
     if i_num < 10:
         return "0" + str(i_num)
     return str(i_num)
-
-
-import sys
-print(sys.argv[1])
-print( secs_to_hmsm_dur( float(sys.argv[1]) ))
 

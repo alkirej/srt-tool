@@ -6,7 +6,19 @@ import typing
 
 
 import lib_fns as libfn
+import srt_fns as srtfn
 import time_fns as timefn
+
+# READ AND ECHO THE SBT INFORMATION
+def read( args: ap.Namespace ) -> None:
+    if not libfn.has_meaningful_value(args.from_file):
+        log.error(f"Cannot find file to remove things from.")
+        print(f"Cannot find file to remove things from.")
+        sys.exit(4)
+
+    subtitle_info: srt_fns.SrtFile = srt_fns.SrtFile(args.from_file)
+    for b in subtitle_info.block_list:
+        timefn.srt_time_output(b)
 
 # REMOVE TIME FROM SBT FILE SUPPLIED AND OUTPUTING UPDATED INFO
 def remove( args: ap.Namespace ) -> None:
