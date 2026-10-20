@@ -1,3 +1,5 @@
+# srt_fns package for srt-tool
+
 # **********************************
 # add project src dir to import path
 # **********************************

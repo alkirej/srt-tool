@@ -40,11 +40,14 @@ class SrtFile:
 
         # If a filename is supplied, read in the subtitles.
         self.st_blocks: [sfn.SubtitleBlock] = self._load_from_file()
+        self.st_blocks.sort(key=lambda bl: bl.tb.start)
 
         # from -- read srt file
 
     def supply_subtitle_list(self, subt_list: [sfn.SubtitleBlock]) -> Self:
         self.st_blocks = subt_list
+        self.st_blocks.sort(key=lambda bl: bl.tb.start)
+
         return self
 
     def _load_from_file(self) -> [sfn.SubtitleBlock]:
@@ -171,21 +174,62 @@ class SrtFile:
         return None
 
     def remove_subtitles_by_time(self,
-                                 time_range: tfn.TimeBlock,
+                                 dlt_tm_blks: [tfn.TimeBlock],
                                  shrink_overlaps: bool = False
                                  ) -> int:
-        removed_blocks: [sfn.SubtitleBlock] = []
-        to_remove: [sfn.SubtitleBlock] = self.get_subtitles_from(time_range, include_overlaps=True)
+        dlt_tm_blks.sort(key=lambda bl: bl.start)
+        removed_time: float = 0.0
+        was_in_time_block: bool = False
+        del_block_iter = iter(dlt_tm_blks)
+        current_block: tfn.TimeBlock = next(del_block_iter)
+        blocks_to_delete: [sfn.SubtitleBlock] = []
 
-        for subt in to_remove:
-            if shrink_overlaps:
-                if subt.tb.cut_to(time_range) is False:
-                    deleted: sfn.SubtitleBlock = self.remove_one_subtitle(subt)
-                    if deleted is not None:
-                        removed_blocks.append(subt)
+        # loop through all subtitle entries in collection/file
+        for subt in self.st_blocks:
+            # Is this subtitle entry inside a block of time to be deleted?
+            block: tfn.TimeBlock = subt.tb
+            now_in_time_block: bool = current_block.contains_overlap(block)
+
+            # Handle special case of moving out of a deletion block.
+            if not now_in_time_block and was_in_time_block:
+                removed_time += current_block.get_block_duration()
+                was_in_time_block = False
+                try:
+                    current_block = next(del_block_iter)
+                except StopIteration:
+                    # indicates we are past the last section to delete.
+                    # Noting will match the current block for the rest
+                    # of the loop and this is what we want, so no
+                    # concerns.
+                    pass
+            # Handle deletion of some or all of subtitle entry
+            if now_in_time_block:
+                # truncate the current subtitle time range if part of
+                # it is deleted, but not all of it.
+                # returning false from cut_to method means entry needs to
+                # be completely deleted.
+                if shrink_overlaps and subt.tb.cut_to(current_block):
+                    # When we remove only a portion of a subtitle display entry,
+                    # we must be careful to remove the correct amount of time
+                    # to keep things in sink
+                    if was_in_time_block:
+                        current_block_dur: float = current_block.get_block_duration()
+                    else:
+                        current_block_dur: float = 0.0
+                    subt.tb.start -= removed_time + current_block_dur
+                    subt.tb.stop -= removed_time + current_block_dur
+                else:
+                    blocks_to_delete.append(subt)
+
+                was_in_time_block = True
+
+            # we are not inside a deletion block. Only need to adjust the
+            # times by the currently deleted amount.
             else:
-                deleted: sfn.SubtitleBlock = self.remove_one_subtitle(subt)
-                if deleted is not None:
-                    removed_blocks.append(subt)
+                subt.tb.start -= removed_time
+                subt.tb.stop -= removed_time
 
-        return len(removed_blocks)
+        for subt in blocks_to_delete:
+            self.st_blocks.remove(subt)
+
+        return len(blocks_to_delete)

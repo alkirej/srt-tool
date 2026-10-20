@@ -4,6 +4,7 @@ import os as os
 import sys
 import typing
 
+import edl_fns as edlfn
 import lib_fns as libfn
 import srt_fns as srtfn
 import time_fns as timefn
@@ -68,8 +69,8 @@ def display_subtitle_at(args: ap.Namespace) -> srtfn.SrtFile:
 # THE GAP FROM ALL ENTRIES AFTER THE GAP.
 def remove_one_gap(args: ap.Namespace) -> srtfn.SrtFile:
     if not libfn.has_meaningful_value(args.from_file):
-        log.error(f"Cannot find file to remove things from.")
-        print(f"Cannot find file to remove things from.")
+        log.error(f"missing --from-file parameter")
+        print(f"missing --from-file parameter")
         sys.exit(3)
 
     start_file: srtfn.SrtFile = read(args)
@@ -80,20 +81,30 @@ def remove_one_gap(args: ap.Namespace) -> srtfn.SrtFile:
     except timefn.TimeException:
         del_gap: timefn.TimeBlock | None = None
 
-    start_file.remove_subtitles_by_time(del_gap, shrink_overlaps=True)
+    start_file.remove_subtitles_by_time([del_gap], shrink_overlaps=True)
     process_results(args, start_file)
 
     return start_file
 
 
-def remove_gap_list(args: ap.Namespace) -> srtfn.SrtFile:
-    if not libfn.has_meaningful_value(args.edl_times):
-        log.error(f"Cannot find file of blocks of time to remove.")
-        print(f"Cannot find file of blocks of time to remove.")
-        sys.exit(4)
+def remove_edl(args: ap.Namespace) -> srtfn.SrtFile:
+    if not libfn.has_meaningful_value(args.from_file):
+        log.error(f"missing --from-file parameter")
+        print(f"missing --from-file parameter")
+        sys.exit(12)
+    if not libfn.has_meaningful_value(args.edl_file):
+        log.error(f"missing --edl-file parameter.")
+        print(f"missing --edl-file parameter.")
+        sys.exit(13)
 
-    print("TIME TO IMPLEMENT REMOVAL OF EDL DATA FROM SRT FILE")
-    return read(args)
+    start_file: srtfn.SrtFile = read(args)
+    start_file.file_name = ""
+
+    edl_del_times: [timefn.TimeBlock] = edlfn.read_deletes_in_edl_file(args.edl_file)
+    start_file.remove_subtitles_by_time(edl_del_times, shrink_overlaps=True)
+    process_results(args, start_file)
+
+    return start_file
 
 
 # SAVE RESULTS TO AN SRT FILE
@@ -119,6 +130,7 @@ def save_as_srt(args: ap.Namespace) -> srtfn.SrtFile:
 # *******************************************************
 # *******************************************************
 SRT_COMMANDS = {"remove-gap": remove_one_gap,
+                "remove-edl": remove_edl,
                 "read": read,
                 "save": save_as_srt,
                 "show": show,
@@ -175,6 +187,9 @@ def main():
                         help="What to do. (Valid options: remove)"
                         )
     parser.add_argument("--from-file",
+                        type=file_name_check
+                        )
+    parser.add_argument("--edl-file",
                         type=file_name_check
                         )
     parser.add_argument("--start-at",

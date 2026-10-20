@@ -1,3 +1,5 @@
+# time_fns package for srt-tool
+
 import logging as log
 
 from .TimeBlock import TimeBlock
