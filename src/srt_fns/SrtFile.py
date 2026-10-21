@@ -56,26 +56,34 @@ class SrtFile:
         if len(self.file_name) == 0:
             return return_block_list
 
-        with open(self.file_name, "r") as srt_file:
+        with open(self.file_name, "r", encoding="latin-1") as srt_file:
             lines: [str] = srt_file.readlines()
 
         line_count: int = len(lines) 
         ln_nbr: int = 0
+        valid_times: bool = True
 
         while ln_nbr < line_count:
+            time_block: tfn.TimeBlock | None = None
             index: int = int(lines[ln_nbr])
             ln_nbr += 1
             (start_index, stop_index) = lines[ln_nbr].split(SRT_SEPARATOR)
-            time_block: tfn.TimeBlock = tfn.TimeBlock(start_index, stop_index)
+            try:
+                time_block: tfn.TimeBlock = tfn.TimeBlock(start_index, stop_index)
+            except tfn.TimeException:
+                valid_times = False
 
             ln_nbr += 1
             subtitle_text: str = ""
             while len(lines[ln_nbr].strip()) > 0:
-                subtitle_text += lines[ln_nbr]
+                subtitle_text += f"{lines[ln_nbr].strip()}\n"
                 ln_nbr += 1
 
-            new_block: sfn.SubtitleBlock = sfn.SubtitleBlock(index, time_block, subtitle_text)
-            return_block_list.append(new_block)
+            if time_block is not None and valid_times:
+                new_block: sfn.SubtitleBlock = sfn.SubtitleBlock(index, time_block, subtitle_text)
+                return_block_list.append(new_block)
+            else:
+                valid_times = True
 
             ln_nbr += 1
 
@@ -95,7 +103,8 @@ class SrtFile:
 
         return looking is not None
 
-    def write_to_file(self, file_name: str,
+    def write_to_file(self,
+                      file_name: str,
                       reindex_blocks: bool = False
                       ) -> Self:
         block_index: int = 0
@@ -108,7 +117,14 @@ class SrtFile:
                 if reindex_blocks:
                     block_index += 1
                     block.idx = block_index
-                srt_file.write(sfn.srt_block_output(block))
+
+                try:
+                    srt_file.write(sfn.srt_block_output(block))
+                except tfn.TimeException:
+                    # sometimes the broadcast sends bad subtitle timestamps
+                    # that end before the start. Let's ignore these.
+                    block_index -= 1
+                    pass
 
         log.info(f"Saved subtitle file {file_name} with {len(self.st_blocks)} entries.")
         return self
@@ -179,21 +195,20 @@ class SrtFile:
                                  ) -> int:
         dlt_tm_blks.sort(key=lambda bl: bl.start)
         removed_time: float = 0.0
-        was_in_time_block: bool = False
         del_block_iter = iter(dlt_tm_blks)
         current_block: tfn.TimeBlock = next(del_block_iter)
+        first_block: tfn.TimeBlockj = current_block
         blocks_to_delete: [sfn.SubtitleBlock] = []
 
         # loop through all subtitle entries in collection/file
         for subt in self.st_blocks:
             # Is this subtitle entry inside a block of time to be deleted?
             block: tfn.TimeBlock = subt.tb
-            now_in_time_block: bool = current_block.contains_overlap(block)
+            after_time_block: bool = block.start > current_block.stop
 
             # Handle special case of moving out of a deletion block.
-            if not now_in_time_block and was_in_time_block:
+            if after_time_block:
                 removed_time += current_block.get_block_duration()
-                was_in_time_block = False
                 try:
                     current_block = next(del_block_iter)
                 except StopIteration:
@@ -202,6 +217,8 @@ class SrtFile:
                     # of the loop and this is what we want, so no
                     # concerns.
                     pass
+
+            now_in_time_block: bool = current_block.contains_overlap(block)
             # Handle deletion of some or all of subtitle entry
             if now_in_time_block:
                 # truncate the current subtitle time range if part of
@@ -212,16 +229,15 @@ class SrtFile:
                     # When we remove only a portion of a subtitle display entry,
                     # we must be careful to remove the correct amount of time
                     # to keep things in sink
-                    if was_in_time_block:
-                        current_block_dur: float = current_block.get_block_duration()
-                    else:
+                    if first_block is current_block:
                         current_block_dur: float = 0.0
-                    subt.tb.start -= removed_time + current_block_dur
-                    subt.tb.stop -= removed_time + current_block_dur
+                    else:
+                        current_block_dur: float = current_block.get_block_duration()
+
+                    subt.tb.start -= removed_time - current_block_dur
+                    subt.tb.stop -= removed_time - current_block_dur
                 else:
                     blocks_to_delete.append(subt)
-
-                was_in_time_block = True
 
             # we are not inside a deletion block. Only need to adjust the
             # times by the currently deleted amount.

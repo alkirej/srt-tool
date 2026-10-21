@@ -31,7 +31,7 @@ def srt_time_output(tb: tfn.TimeBlock) -> str:
 
     if tb.stop < tb.start:
         log.error(f"Invalid sbt time block ({start_at}-{stop_at})")
-        raise Exception(f"Invalid srt time block ({start_at}-{stop_at})")
+        raise tfn.TimeException(f"Invalid srt time block ({start_at}-{stop_at})")
 
     return start_at + SRT_SEPARATOR + stop_at
 

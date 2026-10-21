@@ -1,29 +1,62 @@
+import logging as log
+from pathlib import Path
+import sys
 from typing import Self
+
+# **********************************
+# add project src dir to import path
+# **********************************
+new_path: str = str(Path(__file__).resolve().parent.parent)
+if new_path not in sys.path:
+    sys.path.append(new_path)
+# **********************************
+
 import time_fns as tfn
 
-
 class TimeBlock:
-    def __init__(self, start: float | int | str,
+    def __init__(self,
+                 start: float | int | str,
                  stop: None | float | int | str = None
                  ):
-        self.start: float = tfn.convert_to_secs(start)
-        self.stop: float = tfn.convert_to_secs(stop)
+        self._start: float = tfn.convert_to_secs(start)
+        self._stop: float = tfn.convert_to_secs(stop)
+
+        if self._stop <= self._start:
+            log.info(f"Invalid time block. start {start} cannot be before stop {stop}")
+            raise tfn.TimeException(f"Invalid time block. start {start} cannot be before stop {stop}")
+
+    def get_start(self) -> float:
+        return self._start
+
+    def set_start(self, value: float | str) -> None:
+        self._start = tfn.convert_to_secs(value)
+
+    start = property(get_start, set_start)
+
+    def get_stop(self) -> float:
+        return self._stop
+
+    def set_stop(self, value: float | str) -> None:
+        self._stop = tfn.convert_to_secs(value)
 
     def get_block_start_in_secs(self) -> float:
-        return self.start
+        return self._start
 
     def get_block_stop_in_secs(self) -> float:
-        return self.stop
+        return self._stop
+
+    start = property(get_start, set_start)
+    stop = property(get_stop, set_stop)
 
     def get_block_times(self) -> (float, float):
-        return self.start, self.stop
+        return self._start, self._stop
 
     def get_block_duration(self) -> float:
-        return self.stop - self.start
+        return self._stop - self._start
 
     def contains_time_point(self, time_pt: float | int | str) -> bool:
         num_time_pt: float = tfn.convert_to_secs(time_pt)
-        return self.start <= num_time_pt <= self.stop
+        return self._start <= num_time_pt <= self._stop
 
     def contains_duration(self, duration) -> bool:
         start_time_inside: bool = self.contains_time_point(duration.start)
@@ -41,12 +74,12 @@ class TimeBlock:
         stop_time_inside: bool = self.contains_time_point(duration.stop)
         return stop_time_inside and not start_time_inside
 
-    def contains_overlap(self, duration) -> bool:
-        start_time_inside: bool = self.contains_time_point(duration.start)
-        stop_time_inside: bool = self.contains_time_point(duration.stop)
+    def contains_overlap(self, duration: Self) -> bool:
+        start_time_inside: bool = self.contains_time_point(duration._start)
+        stop_time_inside: bool = self.contains_time_point(duration._stop)
 
         overlap_one_boundary: bool = start_time_inside ^ stop_time_inside
-        complete_overlap: bool = (duration.start < self.start and duration.stop > self.stop) \
+        complete_overlap: bool = (duration._start < self._start and duration._stop > self._stop) \
                                      or self.contains_duration(duration)
 
         return overlap_one_boundary or complete_overlap
@@ -69,10 +102,10 @@ class TimeBlock:
     # ************************************************
     def cut_to(self, timeframe: Self) -> bool:
         if self.overlap_end(timeframe):
-            self.stop = timeframe.start - 0.002
+            self._stop = timeframe._start - 0.002
             return True
         if self.overlap_start(timeframe):
-            self.start = timeframe.stop + 0.002
+            self._start = timeframe._stop + 0.002
             return True
 
         return False

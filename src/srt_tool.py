@@ -177,6 +177,7 @@ def timestamp_check(time_str: str) -> float:
 
 
 def main():
+    log.info(f'Command line params: {" ".join(sys.argv)}')
     parser: ap.ArgumentParser = ap.ArgumentParser(
         prog="srt-tool",
         description="SubRip Text (srt) tool"
@@ -223,7 +224,6 @@ def main():
         sys.exit()
 
     args.command(args)
-
 
 if "__main__" == __name__:
     # SETUP LOGGER BEFORE IMPORTS SO THEY CAN USE THESE SETTINGS
