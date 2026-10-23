@@ -196,9 +196,14 @@ class SrtFile:
         dlt_tm_blks.sort(key=lambda bl: bl.start)
         removed_time: float = 0.0
         del_block_iter = iter(dlt_tm_blks)
-        current_block: tfn.TimeBlock = next(del_block_iter)
+        try:
+            current_block: tfn.TimeBlock = next(del_block_iter)
+        # nothing found to delete
+        except StopIteration:
+            return 0
         first_block: tfn.TimeBlockj = current_block
         blocks_to_delete: [sfn.SubtitleBlock] = []
+        no_more_blocks: bool = False
 
         # loop through all subtitle entries in collection/file
         for subt in self.st_blocks:
@@ -207,7 +212,7 @@ class SrtFile:
             after_time_block: bool = block.start > current_block.stop
 
             # Handle special case of moving out of a deletion block.
-            if after_time_block:
+            if after_time_block and not no_more_blocks:
                 removed_time += current_block.get_block_duration()
                 try:
                     current_block = next(del_block_iter)
@@ -216,7 +221,7 @@ class SrtFile:
                     # Noting will match the current block for the rest
                     # of the loop and this is what we want, so no
                     # concerns.
-                    pass
+                    no_more_blocks=True
 
             now_in_time_block: bool = current_block.contains_overlap(block)
             # Handle deletion of some or all of subtitle entry

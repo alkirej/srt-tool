@@ -13,6 +13,7 @@ if new_path not in sys.path:
 
 import time_fns as tfn
 
+
 class TimeBlock:
     def __init__(self,
                  start: float | int | str,
@@ -21,32 +22,40 @@ class TimeBlock:
         self._start: float = tfn.convert_to_secs(start)
         self._stop: float = tfn.convert_to_secs(stop)
 
-        if self._stop <= self._start:
-            log.info(f"Invalid time block. start {start} cannot be before stop {stop}")
-            raise tfn.TimeException(f"Invalid time block. start {start} cannot be before stop {stop}")
+        self._verify_time_block()
 
-    def get_start(self) -> float:
+    def _verify_time_block(self):
+        if self._start < 0.0 or self._stop < 0.0:
+            log.warning(f"Times cannot be negative. ({self._start}, {self._stop})")
+            raise tfn.TimeException(f"Times cannot be negative. ({self._start}, {self._stop})")
+
+        if self._stop <= self._start:
+            log.info(f"Invalid time block. start {self._start} cannot be before stop {self._stop}")
+            raise tfn.TimeException(f"Invalid time block. start {self._start} cannot be before stop {self._stop}")
+
+    @property
+    def start(self) -> float:
         return self._start
 
-    def set_start(self, value: float | str) -> None:
+    @start.setter
+    def start(self, value: float | str) -> None:
         self._start = tfn.convert_to_secs(value)
+        self._verify_time_block()
 
-    start = property(get_start, set_start)
-
-    def get_stop(self) -> float:
+    @property
+    def stop(self) -> float:
         return self._stop
 
-    def set_stop(self, value: float | str) -> None:
+    @stop.setter
+    def stop(self, value: float | str) -> None:
         self._stop = tfn.convert_to_secs(value)
+        self._verify_time_block()
 
     def get_block_start_in_secs(self) -> float:
         return self._start
 
     def get_block_stop_in_secs(self) -> float:
         return self._stop
-
-    start = property(get_start, set_start)
-    stop = property(get_stop, set_stop)
 
     def get_block_times(self) -> (float, float):
         return self._start, self._stop

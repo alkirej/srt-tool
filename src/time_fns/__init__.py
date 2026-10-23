@@ -104,7 +104,7 @@ def secs_to_hmsm_dur(secs: float) -> str:
 def num_as_two_digits(num: int | float) -> str:
     i_num = int(num)
     if i_num > 99 or i_num < 0:
-        raise Exception(f"{num} cannot be converted to a 2 digit number")
+        raise TimeException(f"{num} cannot be converted to a 2 digit number")
 
     if i_num < 10:
         return "0" + str(i_num)

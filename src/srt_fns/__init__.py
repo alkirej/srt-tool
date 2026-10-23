@@ -37,8 +37,14 @@ def srt_time_output(tb: tfn.TimeBlock) -> str:
 
 
 def srt_block_output(sb: SubtitleBlock) -> str:
-    srt_lines: [str] = [str(sb.idx),
-                        srt_time_output(sb.tb),
-                        sb.to_display
-                        ]
-    return "".join(["\n".join(srt_lines), BLANK_LINE])
+    try:
+        srt_lines: [str] = [str(sb.idx),
+                            srt_time_output(sb.tb),
+                            sb.to_display
+                            ]
+        return "".join(["\n".join(srt_lines), BLANK_LINE])
+
+    except tfn.TimeException as te:
+        print(f"Trouble with this time block:\n    {sb.tb.start}-{sb.tb.stop}")
+        log.error(f"Trouble with this time block: {sb.tb.start}-{sb.tb.stop}")
+        raise te
