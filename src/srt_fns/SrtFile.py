@@ -236,6 +236,15 @@ class SrtFile:
                     # to keep things in sink
                     if first_block is current_block:
                         current_block_dur: float = 0.0
+
+                    # crossing the start of a delete time block
+                    # delete previously deleted time, but not this block.
+                    elif subt.tb.stop < current_block.start:
+                        current_block_dur: float=0.0
+
+                    # crossing the end of a delete time block
+                    # delete previously deleted time AND the time in
+                    # the current block.
                     else:
                         current_block_dur: float = current_block.get_block_duration()
 
