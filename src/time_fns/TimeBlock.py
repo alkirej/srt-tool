@@ -58,7 +58,7 @@ class TimeBlock:
     def get_block_start_in_secs(self) -> float:
         return self._start
 
-    def add_minimum_to_start(self) -> None:
+    def add_minimum_to_block(self) -> None:
         self.stop += .001
         self.start += .001
 
