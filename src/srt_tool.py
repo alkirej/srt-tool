@@ -111,7 +111,7 @@ def remove_edl(args: ap.Namespace) -> srtfn.SrtFile:
 def save_as_srt(args: ap.Namespace) -> srtfn.SrtFile:
     if not libfn.has_meaningful_value(args.save_as):
         log.error(f"No file name specified for saving. (use --save-as)")
-        print(f"No file name specified for saving. (use --save-as)")
+        print(f" file name specified for saving. (use --save-as)")
         sys.exit(8)
 
     subs_file: srtfn.SrtFile = read(args)

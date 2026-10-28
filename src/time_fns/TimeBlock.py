@@ -31,7 +31,11 @@ class TimeBlock:
 
         if self._stop <= self._start:
             log.info(f"Invalid time block. start {self._start} cannot be before stop {self._stop}")
-            raise tfn.TimeException(f"Invalid time block. start {self._start} cannot be before stop {self._stop}")
+            self._stop = self._start + 0.001
+
+            # Used to error out on invalid subtitle timestamps.
+            # Occasionally, even the big guys make mistakes, so handle more gracefully.
+            # raise tfn.TimeException(f"Invalid time block. start {self._start} cannot be before stop {self._stop}")
 
     @property
     def start(self) -> float:
@@ -53,6 +57,10 @@ class TimeBlock:
 
     def get_block_start_in_secs(self) -> float:
         return self._start
+
+    def add_minimum_to_start(self) -> None:
+        self.stop += .001
+        self.start += .001
 
     def get_block_stop_in_secs(self) -> float:
         return self._stop

@@ -93,7 +93,7 @@ def secs_to_hmsm_dur(secs: float) -> str:
               .format(num_as_two_digits(hrs),
                       num_as_two_digits(mins),
                       num_as_two_digits(secs_left),
-                      str(i_millis)
+                      f"{i_millis:03}"
                       )
 
 

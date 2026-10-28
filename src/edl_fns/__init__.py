@@ -10,7 +10,6 @@ if new_path not in sys.path:
     sys.path.append(new_path)
 
 import time_fns as time
-import srt_fns
 
 EDL_ACTION_DELETE: int = 3
 

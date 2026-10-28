@@ -41,8 +41,7 @@ class SrtFile:
         # If a filename is supplied, read in the subtitles.
         self.st_blocks: [sfn.SubtitleBlock] = self._load_from_file()
         self.st_blocks.sort(key=lambda bl: bl.tb.start)
-
-        # from -- read srt file
+        self.clean()
 
     def supply_subtitle_list(self, subt_list: [sfn.SubtitleBlock]) -> Self:
         self.st_blocks = subt_list
@@ -221,7 +220,7 @@ class SrtFile:
                     # Noting will match the current block for the rest
                     # of the loop and this is what we want, so no
                     # concerns.
-                    no_more_blocks=True
+                    no_more_blocks = True
 
             now_in_time_block: bool = current_block.contains_overlap(block)
             # Handle deletion of some or all of subtitle entry
@@ -240,7 +239,7 @@ class SrtFile:
                     # crossing the start of a delete time block
                     # delete previously deleted time, but not this block.
                     elif subt.tb.stop < current_block.start:
-                        current_block_dur: float=0.0
+                        current_block_dur: float = 0.0
 
                     # crossing the end of a delete time block
                     # delete previously deleted time AND the time in
@@ -248,8 +247,8 @@ class SrtFile:
                     else:
                         current_block_dur: float = current_block.get_block_duration()
 
-                    subt.tb.start -= removed_time - current_block_dur
-                    subt.tb.stop -= removed_time - current_block_dur
+                    subt.tb.start -= (removed_time + current_block_dur)
+                    subt.tb.stop -= (removed_time + current_block_dur)
                 else:
                     blocks_to_delete.append(subt)
 
@@ -263,3 +262,18 @@ class SrtFile:
             self.st_blocks.remove(subt)
 
         return len(blocks_to_delete)
+
+    def clean(self) -> None:
+        overlap_count: int = 0
+        previous_end_time: float = 0.0
+        for st in self.st_blocks:
+            start_time: float = st.tb.start
+
+            if start_time < previous_end_time:
+                overlap_count += 1
+                st.tb.start = previous_end_time
+                st.tb.add_minimum_to_block()
+
+            previous_end_time = st.tb.stop
+
+        log.info(f"Found {overlap_count} overlapping subtitles in '{self.file_name}'.")
