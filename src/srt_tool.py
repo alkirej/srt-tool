@@ -1,6 +1,5 @@
 import argparse as ap
 import logging as log
-import os as os
 import sys
 import typing
 
@@ -154,24 +153,6 @@ def srt_command_check(command: str) -> typing.Callable[[ap.Namespace], None]:
         sys.exit(1)
 
 
-def new_file_name_check(file_name: str) -> str:
-    if not os.path.exists(file_name):
-        return file_name
-    else:
-        log.error(f"{file_name} already exists.")
-        print(f"{file_name} already exists.")
-        sys.exit(7)
-
-
-def file_name_check(file_name: str) -> str:
-    if os.path.isfile(file_name):
-        return file_name
-    else:
-        log.error(f"{file_name} is not a readable file.")
-        print(f"{file_name} is not a readable file.")
-        sys.exit(2)
-
-
 def timestamp_check(time_str: str) -> float:
     return timefn.hmsm_dur_to_secs(time_str)
 
@@ -188,10 +169,10 @@ def main():
                         help="What to do. (Valid options: remove)"
                         )
     parser.add_argument("--from-file",
-                        type=file_name_check
+                        type=libfn.file_name_check
                         )
     parser.add_argument("--edl-file",
-                        type=file_name_check
+                        type=libfn.file_name_check
                         )
     parser.add_argument("--start-at",
                         type=timestamp_check
@@ -199,14 +180,11 @@ def main():
     parser.add_argument("--stop-at",
                         type=timestamp_check
                         )
-    parser.add_argument("--edl-times",
-                        type=file_name_check
-                        )
     parser.add_argument("--at",
                         type=timestamp_check
                         )
     parser.add_argument("--save-as",
-                        type=new_file_name_check
+                        type=libfn.new_file_name_check
                         )
     parser.add_argument("--clean-escape-seq",
                         default=False,
@@ -224,6 +202,7 @@ def main():
         sys.exit()
 
     args.command(args)
+
 
 if "__main__" == __name__:
     # SETUP LOGGER BEFORE IMPORTS SO THEY CAN USE THESE SETTINGS

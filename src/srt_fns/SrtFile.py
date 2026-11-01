@@ -55,7 +55,7 @@ class SrtFile:
         if len(self.file_name) == 0:
             return return_block_list
 
-        with open(self.file_name, "r", encoding="latin-1") as srt_file:
+        with open(self.file_name, "r", encoding="utf-8", errors="replace") as srt_file:
             lines: [str] = srt_file.readlines()
 
         line_count: int = len(lines) 
@@ -111,7 +111,7 @@ class SrtFile:
             log.error(f"{file_name} already exists. Quiting")
             raise Exception(f"{file_name} already exists. Quiting")
 
-        with open(file_name, "w") as srt_file:
+        with open(file_name, "w", encoding="utf-8") as srt_file:
             for block in self.st_blocks:
                 if reindex_blocks:
                     block_index += 1

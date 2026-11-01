@@ -32,10 +32,6 @@ def main():
     pretty_time: str = time.secs_to_hmsm_dur(total_to_del)
     print(f"Total time to remove: {pretty_time}")
 
-    subt: srt.SrtFile = srt.SrtFile("Best Medicine (2026) - S02E04 - No Place Like Om.p1.svc01.srt")
-    subt.remove_subtitles_by_time(delete_times)
-    subt.write_to_file("jeff-test.srt", False)
-
 
 if "__main__" == __name__:
     # SETUP LOGGER BEFORE IMPORTS SO THEY CAN USE THESE SETTINGS

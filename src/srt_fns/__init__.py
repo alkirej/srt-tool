@@ -36,11 +36,23 @@ def srt_time_output(tb: tfn.TimeBlock) -> str:
     return start_at + SRT_SEPARATOR + stop_at
 
 
+what_to_clean: [(str,str)] \
+        = [("&l", "\u266b")]
+
+
+def clean_srt_text(srt_text: str) -> str:
+    final_answer: str = srt_text
+    for (m, r) in what_to_clean:
+        final_answer = final_answer.replace(m,r)
+
+    return final_answer
+
+
 def srt_block_output(sb: SubtitleBlock) -> str:
     try:
         srt_lines: [str] = [str(sb.idx),
                             srt_time_output(sb.tb),
-                            sb.to_display
+                            clean_srt_text(sb.to_display)
                             ]
         return "".join(["\n".join(srt_lines), BLANK_LINE])
 
