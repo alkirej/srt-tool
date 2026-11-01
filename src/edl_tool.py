@@ -4,33 +4,40 @@ import sys
 import edl_fns as edl
 import time_fns as time
 
-import srt_fns as srt
-
 
 def main():
     log.info(f'Command line params: {" ".join(sys.argv)}')
+    file_name: str = sys.argv[1]
 
     delete_times: [time.TimeBlock] \
-            = edl.read_deletes_in_edl_file(sys.argv[1])
-
-    total_to_del: float = 0.0
-    for item in delete_times:
-        new_start: str = time.secs_to_hmsm_dur(item.start - total_to_del)
-
-        current_dur: float = item.get_block_duration()
-        total_to_del += current_dur
-        new_stop: str = time.secs_to_hmsm_dur(item.stop - total_to_del)
-
-        pretty_start: str = time.secs_to_hmsm_dur(item.start)
-        pretty_stop: str = time.secs_to_hmsm_dur(item.stop)
-        print(f"{pretty_start} to {pretty_stop}  ({current_dur:.3f} secs) ({total_to_del:.3f} tot)")
-        print(f"    becomes:  {new_start} to {new_stop}")
-
-        print()
+            = edl.read_deletes_in_edl_file(file_name)
 
     print()
-    pretty_time: str = time.secs_to_hmsm_dur(total_to_del)
-    print(f"Total time to remove: {pretty_time}")
+    print(f"EDL File: {file_name}")
+    print()
+    print()
+    print(f"Commercial locations in video:")
+    for index, item in enumerate(delete_times, start=1):
+        print(f"{index:4}  {item.start:10,.2f} - {item.stop:10,.2f}")
+
+    print()
+    print(f"Locations of removed commercials:")
+    prev_end: None | float = None
+
+    for index, item in enumerate(delete_times, start=1):
+        if prev_end is None:
+            if item.start <= 0.1:
+                prev_end = item.stop
+                continue
+            else:
+                prev_end = 0.0
+
+        pretty_time: str = time.secs_to_hmsm_dur(item.start, True)
+        print(f"    {item.start:10,.2f}   {pretty_time}")
+        prev_end = item.stop
+        # regular_video_dur: float = item.start - prev_end
+
+
 
 
 if "__main__" == __name__:

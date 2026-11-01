@@ -81,7 +81,9 @@ def convert_to_secs(num_seconds: str | float | int) -> float:
 # Given a number of seconds, return the duration in the
 # HH:MM:SS,mmmm format.
 # *****************************************************
-def secs_to_hmsm_dur(secs: float) -> str:
+def secs_to_hmsm_dur(secs: float,
+                     remove_prefix_zeroes: bool = False
+                     ) -> str:
     i_secs: int = int(secs)
     millis: float = secs - i_secs  # fractions of a second
     millis = millis * MILLI             # convert to milli secs
@@ -89,12 +91,28 @@ def secs_to_hmsm_dur(secs: float) -> str:
     (hrs, secs_left) = divmod(i_secs, HOUR)
     (mins, secs_left) = divmod(secs_left, MINUTE)
 
-    return "{0}:{1}:{2},{3}" \
+    pretty_time: str = "{0}:{1}:{2},{3}" \
               .format(num_as_two_digits(hrs),
                       num_as_two_digits(mins),
                       num_as_two_digits(secs_left),
                       f"{i_millis:03}"
                       )
+
+    prefix: bool = True
+    if remove_prefix_zeroes:
+        return_val: [str] = []
+        for idx, ch in enumerate(pretty_time):
+            if ch == ",":
+                ch = "."
+            if prefix and (ch == "0" or ch == ":"):
+                return_val.append(" ")
+            else:
+                return_val.append(ch)
+                prefix = False
+
+        return "".join(return_val)
+    else:
+        return pretty_time
 
 
 # *****************************************************
