@@ -30,7 +30,7 @@ class TimeBlock:
             raise tfn.TimeException(f"Times cannot be negative. ({self._start}, {self._stop})")
 
         if self._stop <= self._start:
-            log.info(f"Invalid time block. start {self._start} cannot be before stop {self._stop}")
+            log.info(f"Invalid time block. start {self._start} cannot be after stop {self._stop}")
             self._stop = self._start + 0.001
 
             # Used to error out on invalid subtitle timestamps.

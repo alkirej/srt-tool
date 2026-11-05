@@ -54,10 +54,11 @@ def display_subtitle_at(args: ap.Namespace) -> srtfn.SrtFile:
         sys.exit(6)
 
     subtitle_info: srtfn.SrtFile = srtfn.SrtFile(args.from_file)
-    print(subtitle_info.is_subtitle_here(args.at))
     if subtitle_info.is_subtitle_here(args.at):
         blck: srtfn.SubtitleBlock = subtitle_info.find_block_at(args.at)
         print(blck.to_display)
+    else:
+        print("No subtitle at this timestamp.")
 
     return subtitle_info
 
@@ -110,10 +111,22 @@ def remove_edl(args: ap.Namespace) -> srtfn.SrtFile:
 def save_as_srt(args: ap.Namespace) -> srtfn.SrtFile:
     if not libfn.has_meaningful_value(args.save_as):
         log.error(f"No file name specified for saving. (use --save-as)")
-        print(f" file name specified for saving. (use --save-as)")
-        sys.exit(8)
+        print(f"No file name specified for saving. (use --save-as)")
+        sys.exit(1)
 
     subs_file: srtfn.SrtFile = read(args)
+    subs_file.write_to_file(args.save_as)
+    return subs_file
+
+
+def delay_subtitles_by(args: ap.Namespace) -> srtfn.SrtFile:
+    if not libfn.has_meaningful_value(args.save_as):
+        log.error(f"No file name specified for saving. (use --save-as)")
+        print(f"No file name specified for saving. (use --save-as)")
+        sys.exit(1)
+
+    subs_file: srtfn.SrtFile = read(args)
+    subs_file.delay_subtitles_by(args.by)
     subs_file.write_to_file(args.save_as)
     return subs_file
 
@@ -128,13 +141,15 @@ def save_as_srt(args: ap.Namespace) -> srtfn.SrtFile:
 # *******************************************************
 # *******************************************************
 # *******************************************************
-SRT_COMMANDS = {"remove-gap": remove_one_gap,
-                "remove-edl": remove_edl,
-                "read": read,
-                "save": save_as_srt,
-                "show": show,
-                "show-subtitle": display_subtitle_at,
-                }
+SRT_COMMANDS = {
+        "delay-titles": delay_subtitles_by,
+        "read": read,
+        "remove-gap": remove_one_gap,
+        "remove-edl": remove_edl,
+        "save": save_as_srt,
+        "show": show,
+        "show-subtitle": display_subtitle_at,
+}
 
 
 # *******************************************************
@@ -154,7 +169,7 @@ def srt_command_check(command: str) -> typing.Callable[[ap.Namespace], None]:
 
 
 def timestamp_check(time_str: str) -> float:
-    return timefn.hmsm_dur_to_secs(time_str)
+    return timefn.convert_to_secs(time_str)
 
 
 def main():
@@ -166,7 +181,9 @@ def main():
 
     parser.add_argument("command",
                         type=srt_command_check,
-                        help="What to do. (Valid options: remove)"
+                        help="What to do. Valid options are: " +
+                             "delay-titles, read, remove-edl, " +
+                             "remove-gap, read, save, show, show-title"
                         )
     parser.add_argument("--from-file",
                         type=libfn.file_name_check
@@ -183,12 +200,11 @@ def main():
     parser.add_argument("--at",
                         type=timestamp_check
                         )
+    parser.add_argument("--by",
+                        type=timestamp_check
+                        )
     parser.add_argument("--save-as",
                         type=libfn.new_file_name_check
-                        )
-    parser.add_argument("--clean-escape-seq",
-                        default=False,
-                        action="store_true"
                         )
     parser.add_argument("--reindex",
                         default=False,

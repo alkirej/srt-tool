@@ -68,7 +68,11 @@ def hmsm_dur_to_secs(in_str: str) -> float:
 # *****************************************************
 def convert_to_secs(num_seconds: str | float | int) -> float:
     if type(num_seconds) is str:
-        return hmsm_dur_to_secs(num_seconds.strip())
+        try:
+            return float(num_seconds)
+        except ValueError:
+            return hmsm_dur_to_secs(num_seconds.strip())
+
     if type(num_seconds) is int:
         return float(num_seconds)
     if type(num_seconds) is float:

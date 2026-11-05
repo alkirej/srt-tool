@@ -55,7 +55,9 @@ class SrtFile:
         if len(self.file_name) == 0:
             return return_block_list
 
-        with open(self.file_name, "r", encoding="utf-8", errors="replace") as srt_file:
+        # utf-8 doesn't properly recognize accents, etc.
+        # with open(self.file_name, "r", encoding="utf-8", errors="replace") as srt_file:
+        with open(self.file_name, "r", encoding="Latin-1", errors="replace") as srt_file:
             lines: [str] = srt_file.readlines()
 
         line_count: int = len(lines) 
@@ -75,7 +77,7 @@ class SrtFile:
             ln_nbr += 1
             subtitle_text: str = ""
             while len(lines[ln_nbr].strip()) > 0:
-                subtitle_text += f"{lines[ln_nbr].strip()}\n"
+                subtitle_text += f"{lines[ln_nbr].strip().replace('\0', '')}\n"
                 ln_nbr += 1
 
             if time_block is not None and valid_times:
@@ -277,3 +279,10 @@ class SrtFile:
             previous_end_time = st.tb.stop
 
         log.info(f"Found {overlap_count} overlapping subtitles in '{self.file_name}'.")
+
+    def delay_subtitles_by(self, delay_by: float) -> Self:
+        for st in self.st_blocks:
+            st.tb.start += delay_by
+            st.tb.stop += delay_by
+
+        return self
