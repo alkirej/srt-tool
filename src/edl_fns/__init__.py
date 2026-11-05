@@ -11,6 +11,10 @@ if new_path not in sys.path:
 
 import time_fns as time
 
+from .ComskipTimeBlock import ComskipTimeBlock
+from .ComskipBlockList import ComskipBlockList
+
+
 EDL_ACTION_DELETE: int = 3
 
 EDL_FIELD_START: int = 0
@@ -40,3 +44,15 @@ def read_deletes_in_edl_file(file_name: str) -> [time.TimeBlock]:
 
     time_blocks.sort(key=lambda tbl: tbl.start)
     return time_blocks
+
+
+def write_deletes_to_edl_file(times: [time.TimeBlock], file_name: str) -> None:
+    with open(file_name, "w") as edl_file:
+        for t in times:
+            start = time.convert_to_secs(t.start)
+            stop = time.convert_to_secs(t.stop)
+            edl_file.write(f"{start}\t{stop}\t{EDL_ACTION_DELETE}\n")
+
+
+def read_comskip_log_weighted_block_info(file_name: str) -> ComskipBlockList:
+    return ComskipBlockList(file_name)
