@@ -36,13 +36,8 @@ def read(args: ap.Namespace) -> srtfn.SrtFile:
 
 # PRINT THE SRT FILE OUT TO STDOUT
 def show(args: ap.Namespace) -> srtfn.SrtFile:
-    subs: srtfn.SrtFile = srtfn.SrtFile(args.from_file)
-
-    gap: timefn.TimeBlock = determine_gap(args)
-    if gap.stop == 0.0:
-        gap.stop = subs.end_of_last_subtitle()
-
-    print(srtfn.srt_time_output(gap))
+    subs: srtfn.SrtFile = read(args)
+    subs.write_to_stdout(args.reindex)
     return subs
 
 

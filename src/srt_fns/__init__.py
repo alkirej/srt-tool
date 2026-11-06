@@ -37,13 +37,15 @@ def srt_time_output(tb: tfn.TimeBlock) -> str:
 
 
 what_to_clean: [(str,str)] \
-        = [("&l", "\u266b")]
+        = [("&l", "\u266b"),
+           ("\0", ""),
+           ]
 
 
 def clean_srt_text(srt_text: str) -> str:
     final_answer: str = srt_text
     for (m, r) in what_to_clean:
-        final_answer = final_answer.replace(m,r)
+        final_answer = final_answer.replace(m, r)
 
     return final_answer
 

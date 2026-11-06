@@ -77,7 +77,7 @@ class SrtFile:
             ln_nbr += 1
             subtitle_text: str = ""
             while len(lines[ln_nbr].strip()) > 0:
-                subtitle_text += f"{lines[ln_nbr].strip().replace('\0', '')}\n"
+                subtitle_text += f"{lines[ln_nbr].strip()}\n"
                 ln_nbr += 1
 
             if time_block is not None and valid_times:
@@ -113,7 +113,7 @@ class SrtFile:
             log.error(f"{file_name} already exists. Quiting")
             raise Exception(f"{file_name} already exists. Quiting")
 
-        with open(file_name, "w", encoding="utf-8") as srt_file:
+        with open(file_name, "w", encoding="Latin-1") as srt_file:
             for block in self.st_blocks:
                 if reindex_blocks:
                     block_index += 1
