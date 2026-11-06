@@ -57,6 +57,35 @@ def display_edl_time_info(args: ap.Namespace):
         prev_end = item.stop
 
 
+def make_edl_file_from_playon_recording(args: ap.Namespace) -> None:
+    with open(args.file, "r") as ffprobe_file:
+        current_line: str = ""
+        # skip ahead until chapter list
+        while not current_line.strip().startswith("Chapters:"):
+            current_line = ffprobe_file.readline()
+
+        # read start/end times of video chapter:
+        #     sample: Chapter #0:1: start 8.804000, end 59.396000
+        current_line = ffprobe_file.readline().strip()
+        while current_line.startswith("Chapter #"):
+            words: [str] = current_line.split()
+            start: float = float(words[3][:-1])
+            stop: float = float(words[5])
+
+            # Skip next line:
+            #    sample: Metadata:
+            ffprobe_file.readline()
+            # Determine if video is show or advert.
+            #     title           : Advertisement
+            current_line = ffprobe_file.readline().strip()
+            words = current_line.split()
+            if "Advertisement" == words[2]:
+                print(f"{start:.3f}\t{stop:.3f}\t3")
+
+            # Start next chapter.
+            current_line = ffprobe_file.readline().strip()
+
+
 def display_weighted_block_info(args: ap.Namespace) -> None:
     blocks: edl.ComskipBlockList = edl.ComskipBlockList(args.file)
 
@@ -87,9 +116,11 @@ def display_weighted_block_info(args: ap.Namespace) -> None:
 # *******************************************************
 # *******************************************************
 # *******************************************************
-EDL_COMMANDS = {"show": display_edl_time_info,
-                "block-info": display_weighted_block_info
-                }
+EDL_COMMANDS = {
+    "block-info": display_weighted_block_info,
+    "edl-from-playon": make_edl_file_from_playon_recording,
+    "show": display_edl_time_info,
+}
 
 
 def edl_command_check(command: str) -> typing.Callable[[ap.Namespace], None]:

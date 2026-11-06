@@ -48,7 +48,7 @@ def display_subtitle_at(args: ap.Namespace) -> srtfn.SrtFile:
         print(f"Cannot find file to read things from.")
         sys.exit(6)
 
-    subtitle_info: srtfn.SrtFile = srtfn.SrtFile(args.from_file)
+    subtitle_info: srtfn.SrtFile = srtfn.SrtFile(args.from_file, args.encoding)
     if subtitle_info.is_subtitle_here(args.at):
         blck: srtfn.SubtitleBlock = subtitle_info.find_block_at(args.at)
         print(blck.to_display)
@@ -162,7 +162,6 @@ def encoding_check(encoding: str) -> str:
         raise ValueError(f"{encoding} is not a recognized encoding.")
 
 
-
 def srt_command_check(command: str) -> typing.Callable[[ap.Namespace], None]:
     try:
         return SRT_COMMANDS[command]
@@ -219,6 +218,7 @@ def main():
                         )
     parser.add_argument("--encoding",
                         type=encoding_check,
+                        default="utf-8",
                         help="encoding used by the .srt file being read in."
                         )
 

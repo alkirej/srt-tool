@@ -107,7 +107,6 @@ class SrtFile:
 
     def write_to_file(self,
                       file_name: str,
-                      encoding: str = "utf-8",
                       reindex_blocks: bool = False
                       ) -> Self:
         block_index: int = 0
@@ -115,7 +114,7 @@ class SrtFile:
             log.error(f"{file_name} already exists. Quiting")
             raise Exception(f"{file_name} already exists. Quiting")
 
-        with open(file_name, "w", encoding=encoding) as srt_file:
+        with open(file_name, "w", encoding="utf-8") as srt_file:
             for block in self.st_blocks:
                 if reindex_blocks:
                     block_index += 1
