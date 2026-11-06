@@ -14,12 +14,13 @@ from .ComskipTimeBlock import ComskipTimeBlock
 
 
 class ComskipBlockList:
-    def __init__(self, comskip_log_file: str):
+    def __init__(self, comskip_log_file: str, encoding: str = "utf-8"):
+        self.encoding = encoding
         self.file_name = comskip_log_file
         self.blocks: [ComskipTimeBlock] = []
         self.notes: [str] = []
 
-        self._load_blocks_from_log(comskip_log_file)
+        self._load_blocks_from_log(comskip_log_file, encoding)
 
     def __getitem__(self, idx: int) -> ComskipTimeBlock:
         return self.blocks[idx]
@@ -49,13 +50,16 @@ class ComskipBlockList:
             if bl_start <= bl.block_nbr <= bl_end:
                 bl.add_note(line_of_text)
 
-    def _load_blocks_from_log(self, comskip_log_file: str) -> None:
+    def _load_blocks_from_log(self,
+                              comskip_log_file: str,
+                              encoding: str = "utf-8"
+                              ) -> None:
         if len(comskip_log_file) == 0:
             # log error and raise exception
             print(f"Cannot find {comskip_log_file}. Exiting.")
             log.error(f"Cannot find {comskip_log_file}. Exiting.")
 
-        with open(self.file_name, "r", encoding="utf-8", errors="replace") as log_file:
+        with open(self.file_name, "r", encoding=encoding, errors="replace") as log_file:
             block_lines: [str] = log_file.readlines()
 
         # Search log file for desired data.

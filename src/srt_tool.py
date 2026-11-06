@@ -31,7 +31,7 @@ def read(args: ap.Namespace) -> srtfn.SrtFile:
         print(f"Cannot find file to read things from.")
         sys.exit(5)
 
-    return srtfn.SrtFile(args.from_file)
+    return srtfn.SrtFile(args.from_file, args.encoding)
 
 
 # PRINT THE SRT FILE OUT TO STDOUT
@@ -110,7 +110,7 @@ def save_as_srt(args: ap.Namespace) -> srtfn.SrtFile:
         sys.exit(1)
 
     subs_file: srtfn.SrtFile = read(args)
-    subs_file.write_to_file(args.save_as)
+    subs_file.write_to_file(args.save_as, args.encoding)
     return subs_file
 
 
@@ -146,10 +146,22 @@ SRT_COMMANDS = {
         "show-subtitle": display_subtitle_at,
 }
 
+# *******************************************************
+# *******************************************************
+# *******************************************************
+VALID_ENCODINGS: [str] = [
+    "utf-8",
+    "latin-1",
+]
 
-# *******************************************************
-# *******************************************************
-# *******************************************************
+
+def encoding_check(encoding: str) -> str:
+    if encoding in VALID_ENCODINGS:
+        return encoding
+    else:
+        raise ValueError(f"{encoding} is not a recognized encoding.")
+
+
 
 def srt_command_check(command: str) -> typing.Callable[[ap.Namespace], None]:
     try:
@@ -205,6 +217,11 @@ def main():
                         default=False,
                         action="store_true"
                         )
+    parser.add_argument("--encoding",
+                        type=encoding_check,
+                        help="encoding used by the .srt file being read in."
+                        )
+
     try:
         args = parser.parse_args()
     except Exception as e:

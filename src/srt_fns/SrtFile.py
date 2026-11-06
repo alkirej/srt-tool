@@ -27,7 +27,8 @@ SRT_SEPARATOR: str = " --> "
 
 class SrtFile:
     def __init__(self, 
-                 file_path: str = ""
+                 file_path: str,
+                 encoding: str,
                  ):
         if len(file_path) > 0:
             # Ensure file is not actually a directory. If so, bad news.
@@ -37,6 +38,7 @@ class SrtFile:
 
         # Save the filename to read from (if supplied)
         self.file_name = file_path
+        self.encoding = encoding
 
         # If a filename is supplied, read in the subtitles.
         self.st_blocks: [sfn.SubtitleBlock] = self._load_from_file()
@@ -56,8 +58,7 @@ class SrtFile:
             return return_block_list
 
         # utf-8 doesn't properly recognize accents, etc.
-        # with open(self.file_name, "r", encoding="utf-8", errors="replace") as srt_file:
-        with open(self.file_name, "r", encoding="Latin-1", errors="replace") as srt_file:
+        with open(self.file_name, "r", encoding=self.encoding, errors="replace") as srt_file:
             lines: [str] = srt_file.readlines()
 
         line_count: int = len(lines) 
@@ -106,6 +107,7 @@ class SrtFile:
 
     def write_to_file(self,
                       file_name: str,
+                      encoding: str = "utf-8",
                       reindex_blocks: bool = False
                       ) -> Self:
         block_index: int = 0
@@ -113,7 +115,7 @@ class SrtFile:
             log.error(f"{file_name} already exists. Quiting")
             raise Exception(f"{file_name} already exists. Quiting")
 
-        with open(file_name, "w", encoding="Latin-1") as srt_file:
+        with open(file_name, "w", encoding=encoding) as srt_file:
             for block in self.st_blocks:
                 if reindex_blocks:
                     block_index += 1

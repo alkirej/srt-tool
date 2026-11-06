@@ -12,12 +12,13 @@ def range_check(cmd_line_val: str) -> (int, int):
     print(cmd_line_val)
     try:
         val = int(cmd_line_val)
-        return (val, val)
+        return val, val
     except ValueError:
         pass
 
     as_str: [str] = cmd_line_val.split("-")
     return int(as_str[0]), int(as_str[1])
+
 
 def display_edl_time_info(args: ap.Namespace):
     delete_times: [time.TimeBlock] \
@@ -74,6 +75,7 @@ def display_weighted_block_info(args: ap.Namespace) -> None:
         print(f"\n{len(blocks.notes)} general notes:")
         for n in blocks.notes:
             print(f"    {n}")
+
 
 # *******************************************************
 # *******************************************************

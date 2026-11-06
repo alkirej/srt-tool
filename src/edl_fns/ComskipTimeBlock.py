@@ -14,6 +14,7 @@ FIELD_SEP = " | "
 
 class ComskipTimeBlock:
     def __init__(self, comskip_log_line: str):
+        self.log_line: str = comskip_log_line
         self.block_nbr: int
         self.note_list: [str] = []
         self.commercial: bool | None
@@ -93,7 +94,7 @@ class ComskipTimeBlock:
 
         current_idx: int = 13
         cut_reason: [str] = []
-        while data[current_idx][-1:] not in "+-":
+        while data[current_idx][-1:] not in "+-0":
             cut_reason.append(data[current_idx])
             current_idx += 1
         self.cut_reasons = "".join(cut_reason)
